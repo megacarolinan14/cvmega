@@ -1,6 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
-import { MapPin, Mail, Phone, ExternalLink, Calendar, Layers, Trophy, GraduationCap, Languages, Github, Share2, MoreVertical, BadgeCheck } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Mail, Phone, ExternalLink, Calendar, Layers, Trophy, GraduationCap, Languages, Github, Share2, MoreVertical, BadgeCheck, LayoutDashboard } from "lucide-react";
 
 export default async function PublicCVPage({
   params,
@@ -65,13 +66,22 @@ export default async function PublicCVPage({
               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
               
               {/* Action Buttons Top Right */}
-              <div className="absolute top-4 right-4 flex gap-2">
-                <button className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors">
-                  <Share2 className="w-5 h-5" />
-                </button>
-                <button className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors">
-                  <MoreVertical className="w-5 h-5" />
-                </button>
+              <div className="absolute top-4 right-4 flex gap-3 items-center">
+                <Link 
+                  href="/dashboard"
+                  className="px-4 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  Dashboard
+                </Link>
+                <div className="flex gap-2">
+                  <button className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors">
+                    <Share2 className="w-4 h-4" />
+                  </button>
+                  <button className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors">
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
 
