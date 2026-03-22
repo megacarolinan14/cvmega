@@ -8,10 +8,12 @@ try {
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // Ini bagian paling krusial sesuai saran:
-        privateKey: process.env.FIREBASE_PRIVATE_KEY
-          ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
-          : undefined,
+        // Gunakan Base64 untuk menghindari masalah Vercel memotong \n menjadi spasi
+        privateKey: process.env.FIREBASE_PRIVATE_KEY_BASE64
+          ? Buffer.from(process.env.FIREBASE_PRIVATE_KEY_BASE64, 'base64').toString('utf-8')
+          : process.env.FIREBASE_PRIVATE_KEY
+            ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') 
+            : undefined,
       }),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'cv-mega-5077a.firebasestorage.app',
     });
