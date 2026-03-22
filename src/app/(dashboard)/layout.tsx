@@ -1,92 +1,108 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { FileText, User, Briefcase, GraduationCap, Cpu, Layers, Trophy, Languages, Settings, LogOut, Terminal } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle"; // we will create this next
+import { usePathname } from "next/navigation";
+import { 
+  FileText, User, Briefcase, GraduationCap, Cpu, 
+  Layers, Trophy, Languages, Settings, LogOut, 
+  Terminal
+} from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle"; 
 import { useAuth } from "@/components/auth-provider";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 
 const sidebarLinks = [
-  { href: "/dashboard", label: "Overview", icon: FileText },
-  { href: "/dashboard/profile", label: "Profile", icon: User },
-  { href: "/dashboard/experience", label: "Experience", icon: Briefcase },
-  { href: "/dashboard/education", label: "Education", icon: GraduationCap },
-  { href: "/dashboard/skills", label: "Skills", icon: Cpu },
-  { href: "/dashboard/projects", label: "Projects", icon: Layers },
-  { href: "/dashboard/certifications", label: "Certifications", icon: Trophy },
-  { href: "/dashboard/languages", label: "Languages", icon: Languages },
-  { href: "/dashboard/logs", label: "System Logs", icon: Terminal },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", icon: FileText, title: "Overview" },
+  { href: "/dashboard/profile", icon: User, title: "Profile" },
+  { href: "/dashboard/experience", icon: Briefcase, title: "Experience" },
+  { href: "/dashboard/education", icon: GraduationCap, title: "Education" },
+  { href: "/dashboard/skills", icon: Cpu, title: "Skills" },
+  { href: "/dashboard/projects", icon: Layers, title: "Projects" },
+  { href: "/dashboard/certifications", icon: Trophy, title: "Certifications" },
+  { href: "/dashboard/languages", icon: Languages, title: "Languages" },
+  { href: "/dashboard/logs", icon: Terminal, title: "System Logs" },
+  { href: "/dashboard/settings", icon: Settings, title: "Settings" },
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  }
-
-  if (!user) {
-    return null; // Will redirect shortly
-  }
+  const handleLogout = async () => {
+    await signOut(auth);
+    window.location.href = "/auth/login";
+  };
 
   return (
-    <div className="flex min-h-screen w-full bg-muted/40">
-      {/* Sidebar (Desktop) */}
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-64 flex-col border-r bg-background sm:flex">
-        <div className="flex h-14 items-center border-b px-6">
-          <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <Layers className="h-6 w-6 text-primary" />
-            <span className="text-lg text-primary tracking-tight">CV-Mega</span>
-          </Link>
+    <div className="flex min-h-screen bg-[#F8F9FB] dark:bg-[#121212] font-sans selection:bg-primary/20">
+      
+      {/* Floating Pill Sidebar */}
+      <aside className="hidden md:flex flex-col w-20 bg-white dark:bg-[#1e1e1e] m-6 rounded-[2rem] shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none items-center py-8 z-20 sticky top-6 h-[calc(100vh-3rem)]">
+        
+        {/* Logo */}
+        <div className="w-10 h-10 bg-foreground/5 dark:bg-white/10 rounded-xl flex items-center justify-center mb-10">
+          <Layers className="w-6 h-6 text-foreground" />
         </div>
-        <nav className="flex-1 overflow-auto py-4 px-3 space-y-1 block">
+
+        {/* Navigation Icons flex-1 with hidden scrollbar to prevent clipping if screen is small */}
+        <nav className="flex-1 flex flex-col gap-4 w-full px-3 overflow-y-auto no-scrollbar">
           {sidebarLinks.map((link) => {
+            const isActive = pathname === link.href;
             const Icon = link.icon;
             return (
-              <Link
-                key={link.href}
+              <Link 
+                key={link.href} 
                 href={link.href}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:text-primary hover:bg-muted"
+                title={link.title}
+                className={`w-14 h-14 shrink-0 mx-auto rounded-2xl flex items-center justify-center transition-all duration-200 ${
+                  isActive 
+                  ? "bg-primary/20 text-primary scale-105 shadow-sm" 
+                  : "text-foreground/40 hover:bg-foreground/5 dark:hover:bg-white/5 hover:text-foreground"
+                }`}
               >
-                <Icon className="h-4 w-4" />
-                {link.label}
+                <Icon className={`w-6 h-6 ${isActive ? "fill-primary/20" : ""}`} />
               </Link>
             );
           })}
         </nav>
+
+        {/* Bottom Actions */}
+        <div className="mt-auto shrink-0 flex flex-col gap-4 w-full px-3 pt-6 border-t border-border/50">
+          <button 
+            title="Toggle Theme"
+            className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-foreground/50 hover:bg-foreground/5 dark:hover:bg-white/5 hover:text-foreground transition-all"
+          >
+             <ThemeToggle />
+          </button>
+          <button 
+            onClick={handleLogout}
+            title="Log Out"
+            className="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center text-red-500/70 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 transition-all"
+          >
+            <LogOut className="w-6 h-6" />
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64 w-full">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 justify-between sm:justify-end">
-          {/* Mobile menu goes here (trigger) */}
-          <div className="sm:hidden font-semibold text-primary">CV-Mega</div>
-          <div className="flex items-center gap-4">
-             <ThemeToggle />
-             <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-red-500 transition-colors" onClick={() => signOut(auth)}>
-               <LogOut className="h-4 w-4" />
-               <span className="text-sm font-medium hidden sm:inline">Logout</span>
-             </div>
-          </div>
-        </header>
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
-          {children}
-        </main>
+      <main className="flex-1 p-6 md:p-8 md:pl-0 lg:p-10 lg:pl-4 overflow-y-auto w-full">
+        <div className="max-w-[1200px] mx-auto min-h-full">
+           {children}
+        </div>
+      </main>
+      
+      {/* Mobile Nav */}
+      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-white dark:bg-[#1e1e1e] border dark:border-border/50 rounded-2xl shadow-xl flex justify-around p-3 z-50 overflow-x-auto gap-2">
+         {sidebarLinks.slice(0, 5).map((link) => {
+            const isActive = pathname === link.href;
+            const Icon = link.icon;
+            return (
+              <Link key={link.href} href={link.href} className={`p-3 shrink-0 rounded-xl transition-all ${isActive ? "bg-primary/20 text-primary" : "text-foreground/50"}`}>
+                <Icon className={`w-6 h-6 ${isActive ? "fill-primary/20" : ""}`} />
+              </Link>
+            );
+         })}
       </div>
     </div>
   );
