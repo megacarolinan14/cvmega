@@ -14,17 +14,19 @@ const formatPrivateKey = (key?: string) => {
     // Not valid JSON, proceed as string
   }
 
-  // Handle escaped newlines
+  // Handle escaped newlines and bounding quotes
   formatted = formatted.replace(/\\n/g, "\n").replace(/"/g, '').trim(); 
   
-  // Reconstruct if flattened
-  if (formatted.startsWith('-----BEGIN PRIVATE KEY-----') && !formatted.includes('\n')) {
-    const base64 = formatted
-      .replace('-----BEGIN PRIVATE KEY-----', '')
-      .replace('-----END PRIVATE KEY-----', '')
-      .replace(/\s+/g, '');
-    
-    formatted = `-----BEGIN PRIVATE KEY-----\n${base64}\n-----END PRIVATE KEY-----\n`;
+  // Foolproof Reconstructor for PEM formatted keys
+  // Node.js crypto prefers PEM keys broken into 64-character lines.
+  if (formatted.includes('BEGIN PRIVATE KEY') && formatted.includes('END PRIVATE KEY')) {
+    const base64Payload = formatted
+      .split('BEGIN PRIVATE KEY-----')[1]
+      .split('-----END PRIVATE KEY')[0]
+      .replace(/\s+/g, ''); // Blast away all spaces, newlines, tabs, etc.
+      
+    const chunks = base64Payload.match(/.{1,64}/g) || [];
+    formatted = `-----BEGIN PRIVATE KEY-----\n${chunks.join('\n')}\n-----END PRIVATE KEY-----\n`;
   }
   
   return formatted;
