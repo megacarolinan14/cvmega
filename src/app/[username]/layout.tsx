@@ -1,5 +1,11 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
+import { Inter, Roboto, Playfair_Display, Fira_Code } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const roboto = Roboto({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const playfair = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "700"] });
+const firaCode = Fira_Code({ subsets: ["latin"], weight: ["400", "500", "700"] });
 
 export default async function PublicCVLayout({
   children,
@@ -19,20 +25,21 @@ export default async function PublicCVLayout({
 
   const userProfile = snapshot.docs[0].data();
 
-  // Inject user's custom primary color dynamically using CSS variables
+  // Inject user's custom primary color and font dynamically
   const themePrimaryColor = userProfile.themePrimaryColor || "0 84.2% 60.2%"; // Fallback to Red
+  let fontClass = inter.className;
+  if (userProfile.fontFamily === "roboto") fontClass = roboto.className;
+  if (userProfile.fontFamily === "playfair") fontClass = playfair.className;
+  if (userProfile.fontFamily === "fira-code") fontClass = firaCode.className;
 
   return (
     <div 
-      className="cv-public-wrapper min-h-screen bg-background"
+      className={`cv-public-wrapper min-h-screen bg-background ${fontClass}`}
       style={{
         "--primary": themePrimaryColor,
-        // Calculate a foreground version based on lightness (basic logic)
-        // If it's a very light color, use dark text, else light text
         "--primary-foreground": "210 40% 98%" 
       } as React.CSSProperties}
     >
-      {/* The injected CSS variables will instantly affect all Tailwind classes using bg-primary, text-primary within this tree */}
       {children}
     </div>
   );
