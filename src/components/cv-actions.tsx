@@ -29,7 +29,7 @@ export function CVActions() {
     <div className="absolute top-4 right-4 flex gap-3 items-center no-print z-50">
       <Link 
         href="/dashboard"
-        className="px-4 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10"
+        className="px-4 py-1.5 rounded-full bg-black/20 dark:bg-white/10 hover:bg-black/30 dark:hover:bg-white/20 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 border border-white/20 shadow-sm"
       >
         <LayoutDashboard className="w-3.5 h-3.5" />
         Dashboard
@@ -38,14 +38,14 @@ export function CVActions() {
         <button 
           onClick={handlePrint}
           title="Download PDF"
-          className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/10"
+          className="w-9 h-9 rounded-full bg-black/20 dark:bg-white/10 hover:bg-black/30 dark:hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/20 shadow-sm"
         >
           <Download className="w-4 h-4" />
         </button>
         <button 
           onClick={handleShare}
           title="Share CV"
-          className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/10"
+          className="w-9 h-9 rounded-full bg-black/20 dark:bg-white/10 hover:bg-black/30 dark:hover:bg-white/20 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/20 shadow-sm"
         >
           <Share2 className="w-4 h-4" />
         </button>
