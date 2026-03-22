@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth-provider";
+import { systemLog } from "@/lib/logger";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,12 +41,14 @@ export default function LoginPage() {
           themePrimaryColor: "0 84.2% 60.2%", // Red default
           createdAt: new Date().toISOString()
         });
+        await systemLog("info", `New user registered via Google: ${result.user.email}`);
       }
 
       toast.success("Successfully logged in!");
       router.push("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to log in");
+      await systemLog("error", "Google Auth Login Failed", { error: error.message, code: error.code });
       setIsSigningIn(false);
     }
   };

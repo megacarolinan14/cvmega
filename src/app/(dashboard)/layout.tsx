@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { FileText, User, Briefcase, GraduationCap, Cpu, Layers, Trophy, Languages, Settings, LogOut } from "lucide-react";
+import { FileText, User, Briefcase, GraduationCap, Cpu, Layers, Trophy, Languages, Settings, LogOut, Terminal } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle"; // we will create this next
 import { useAuth } from "@/components/auth-provider";
 import { auth } from "@/lib/firebase";
@@ -18,6 +18,7 @@ const sidebarLinks = [
   { href: "/dashboard/projects", label: "Projects", icon: Layers },
   { href: "/dashboard/certifications", label: "Certifications", icon: Trophy },
   { href: "/dashboard/languages", label: "Languages", icon: Languages },
+  { href: "/dashboard/logs", label: "System Logs", icon: Terminal },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
