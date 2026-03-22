@@ -1,7 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Mail, Phone, ExternalLink, Calendar, Layers, Trophy, GraduationCap, Languages, Github, Share2, MoreVertical, BadgeCheck, LayoutDashboard, Instagram, Linkedin, Twitter, Globe, Link as LinkIcon } from "lucide-react";
+import { MapPin, Mail, Phone, ExternalLink, Calendar, Layers, Trophy, GraduationCap, Languages, Github, Share2, MoreVertical, BadgeCheck, LayoutDashboard, Instagram, Linkedin, Twitter, Globe, Link as LinkIcon, Download } from "lucide-react";
 
 export default async function PublicCVPage({
   params,
@@ -110,20 +110,24 @@ export default async function PublicCVPage({
               <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay"></div>
               
               {/* Action Buttons Top Right */}
-              <div className="absolute top-4 right-4 flex gap-3 items-center">
+              <div className="absolute top-4 right-4 flex gap-3 items-center no-print">
                 <Link 
                   href="/dashboard"
-                  className="px-4 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5"
+                  className="px-4 py-1.5 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-xs font-bold transition-all flex items-center gap-1.5 border border-white/10"
                 >
                   <LayoutDashboard className="w-3.5 h-3.5" />
                   Dashboard
                 </Link>
                 <div className="flex gap-2">
-                  <button className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors">
-                    <Share2 className="w-4 h-4" />
+                  <button 
+                    onClick={() => window.print()}
+                    title="Download PDF"
+                    className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/10"
+                  >
+                    <Download className="w-4 h-4" />
                   </button>
-                  <button className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors">
-                    <MoreVertical className="w-4 h-4" />
+                  <button className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition-colors border border-white/10">
+                    <Share2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -149,7 +153,7 @@ export default async function PublicCVPage({
                 {profile.headline}
               </p>
               
-              <div className="flex items-center gap-3 text-sm text-foreground/50 font-medium mb-6">
+              <div className="flex items-center gap-3 text-sm text-foreground/60 dark:text-foreground/50 font-medium mb-6">
                 {profile.location && <span>{profile.location}</span>}
                 {profile.location && age && <span>|</span>}
                 {age && <span>{age} Years Old</span>}
@@ -157,7 +161,7 @@ export default async function PublicCVPage({
 
               {/* Social Icons */}
               {socials.length > 0 && (
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-4 mb-8 no-print">
                   {socials.map((social: any) => {
                     const Icon = socialIconMap[social.platform] || LinkIcon;
                     return (
@@ -166,7 +170,7 @@ export default async function PublicCVPage({
                         href={social.url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all hover:scale-110"
+                        className="w-10 h-10 rounded-xl bg-muted/50 dark:bg-muted/10 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all hover:scale-110 border border-transparent dark:border-white/5"
                         title={social.platform}
                       >
                         <Icon className="w-5 h-5" />
@@ -176,7 +180,7 @@ export default async function PublicCVPage({
                 </div>
               )}
 
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 no-print">
                 {profile.phone ? (
                   <a 
                     href={`https://wa.me/${profile.phone.replace(/\D/g, '').replace(/^0/, '62')}`} 
@@ -192,7 +196,7 @@ export default async function PublicCVPage({
                   </a>
                 )}
                 {profile.url && (
-                  <a href={profile.url} target="_blank" className="px-8 py-3 rounded-xl border-2 border-border hover:border-foreground/20 dark:hover:border-border text-foreground font-semibold transition-all active:scale-95">
+                  <a href={profile.url} target="_blank" className="px-8 py-3 rounded-xl border-2 border-border dark:border-white/10 hover:border-foreground/20 dark:hover:border-white/20 text-foreground font-semibold transition-all active:scale-95">
                     Portfolio
                   </a>
                 )}

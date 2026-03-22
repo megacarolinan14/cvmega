@@ -185,3 +185,11 @@
 .animate-shake {
   animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
 }
+@media print {
+  .no-print { display: none !important; }
+  body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background-color: white !important; }
+  :root, .dark { --background: 0 0% 100%; --foreground: 222.2 84% 4.9%; --card: 0 0% 100%; --card-foreground: 222.2 84% 4.9%; --border: 214.3 31.8% 91.4%; }
+  .bg-white, .dark\:bg-\[\#1e1e1e\], .bg-\[\#F8F9FB\], .dark\:bg-\[\#121212\] { background-color: white !important; color: black !important; box-shadow: none !important; border: none !important; }
+  h1, h2, h3, p, span { color: black !important; }
+  .rounded-\[2rem\] { border: 1px solid #efefef !important; border-radius: 1rem !important; }
+}

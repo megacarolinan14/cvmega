@@ -20,6 +20,7 @@ export default function ProfileSettingsPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
+    displayName: "",
     username: "",
     headline: "",
     bio: "",
@@ -39,6 +40,7 @@ export default function ProfileSettingsPage() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setFormData({
+            displayName: data.displayName || "",
             username: data.username || "",
             headline: data.headline || "",
             bio: data.bio || "",
@@ -93,8 +95,13 @@ export default function ProfileSettingsPage() {
         username: sanitizedUsername,
         photoUrl: finalPhotoUrl 
       }));
+      
+      // Clear local photo file to reset preview to the new URL
+      setPhotoFile(null);
+      
       toast.success("Profile updated successfully!");
     } catch (error: any) {
+      console.error("Save Error:", error);
       toast.error(error.message || "An error occurred");
     } finally {
       setSaving(false);
@@ -143,6 +150,10 @@ export default function ProfileSettingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="displayName">Public Name</Label>
+                <Input id="displayName" name="displayName" value={formData.displayName} onChange={handleChange} required />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="username">Username (Public URL Slug)</Label>
                 <Input id="username" name="username" value={formData.username} onChange={handleChange} required />
