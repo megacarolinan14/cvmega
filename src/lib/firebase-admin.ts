@@ -3,7 +3,19 @@ import * as admin from "firebase-admin";
 const formatPrivateKey = (key?: string) => {
   if (!key) return undefined;
   // Handle both escaped newlines from env vars and actual newlines
-  return key.replace(/\\n/g, "\n").replace(/"/g, ''); 
+  let formatted = key.replace(/\\n/g, "\n").replace(/"/g, '').trim(); 
+  
+  // If Vercel stripped newlines and it's all on one line (but contains BEGIN/END)
+  if (formatted.startsWith('-----BEGIN PRIVATE KEY-----') && !formatted.includes('\n')) {
+    const base64 = formatted
+      .replace('-----BEGIN PRIVATE KEY-----', '')
+      .replace('-----END PRIVATE KEY-----', '')
+      .replace(/\s+/g, '');
+    
+    formatted = `-----BEGIN PRIVATE KEY-----\n${base64}\n-----END PRIVATE KEY-----\n`;
+  }
+  
+  return formatted;
 };
 
 export const createFirebaseAdminApp = () => {
