@@ -77,7 +77,7 @@ export default async function LandingPage() {
     const isNotFound = queryError.message?.includes("NOT_FOUND") || queryError.toString().includes("NOT_FOUND");
     
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#121212] font-sans">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#121212] font-sans text-white">
         <div className="max-w-3xl bg-[#1e1e1e] border border-orange-500/30 rounded-3xl p-8 space-y-6 shadow-2xl w-full">
           <h1 className="text-3xl font-bold text-orange-500">
             {isNotFound ? "Firestore Database Not Found" : "Firebase Config Error"}
@@ -116,5 +116,43 @@ export default async function LandingPage() {
     redirect(`/${username}`);
   }
 
-  redirect("/auth/login");
+  // Fallback Landing Page if no profile exists yet
+  return (
+    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#121212] flex flex-col items-center justify-center p-6 text-center selection:bg-primary/20">
+      <div className="max-w-2xl space-y-8">
+        <div className="space-y-4">
+          <div className="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mx-auto mb-6">
+            <div className="w-10 h-10 bg-primary rounded-xl" />
+          </div>
+          <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-7xl">
+            CV-Mega <span className="text-primary italic">Platform</span>
+          </h1>
+          <p className="text-xl text-muted-foreground font-medium max-w-lg mx-auto">
+            Platform pembuatan CV dinamis untuk profesional. Belum ada profil publik yang ditemukan untuk ditampilkan di sini.
+          </p>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <a
+            href="/auth/login"
+            className="px-10 py-4 bg-primary text-primary-foreground rounded-2xl font-bold hover:scale-105 hover:shadow-xl hover:shadow-primary/20 transition-all active:scale-95"
+          >
+            Login ke Dashboard
+          </a>
+          <a
+            href="/dashboard/users"
+            className="px-10 py-4 bg-white dark:bg-[#1e1e1e] border-2 border-border rounded-2xl font-bold hover:bg-muted transition-all active:scale-95 shadow-sm"
+          >
+            Manage Profiles
+          </a>
+        </div>
+        
+        <div className="pt-16 grid grid-cols-2 sm:grid-cols-3 gap-8 opacity-40 grayscale">
+          <div className="font-bold text-lg">FAST</div>
+          <div className="font-bold text-lg">DYNAMIC</div>
+          <div className="font-bold text-lg hidden sm:block">SECURE</div>
+        </div>
+      </div>
+    </div>
+  );
 }
