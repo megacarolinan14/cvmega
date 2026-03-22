@@ -177,9 +177,20 @@ export default async function PublicCVPage({
               )}
 
               <div className="flex items-center gap-4">
-                <a href={`mailto:hello@example.com`} className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all shadow-md shadow-primary/20 active:scale-95">
-                  Contact Me
-                </a>
+                {profile.phone ? (
+                  <a 
+                    href={`https://wa.me/${profile.phone.replace(/\D/g, '').replace(/^0/, '62')}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all shadow-md shadow-primary/20 active:scale-95"
+                  >
+                    Contact Me
+                  </a>
+                ) : (
+                  <a href={`mailto:${profile.email || 'hello@example.com'}`} className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all shadow-md shadow-primary/20 active:scale-95">
+                    Contact Me
+                  </a>
+                )}
                 {profile.url && (
                   <a href={profile.url} target="_blank" className="px-8 py-3 rounded-xl border-2 border-border hover:border-foreground/20 dark:hover:border-border text-foreground font-semibold transition-all active:scale-95">
                     Portfolio
