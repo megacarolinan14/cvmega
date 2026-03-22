@@ -27,8 +27,9 @@ export default function ExperiencePage() {
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
   const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     company: "",
     role: "",
@@ -69,6 +70,19 @@ export default function ExperiencePage() {
     }
   };
 
+  const handleEdit = (exp: Experience) => {
+    setFormData({
+      company: exp.company,
+      role: exp.role,
+      description: exp.description || "",
+      startDate: exp.startDate,
+      endDate: exp.endDate || "",
+      isCurrent: exp.isCurrent,
+    });
+    setEditingId(exp.id);
+    setIsEditing(true);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -81,10 +95,16 @@ export default function ExperiencePage() {
         updatedAt: new Date().toISOString()
       };
 
-      await addDoc(collection(db, "profiles", user.uid, "experiences"), payload);
+      if (editingId) {
+        await updateDoc(doc(db, "profiles", user.uid, "experiences", editingId), payload);
+        toast.success("Experience updated!");
+      } else {
+        await addDoc(collection(db, "profiles", user.uid, "experiences"), payload);
+        toast.success("Experience added!");
+      }
 
-      toast.success("Experience added!");
       setIsEditing(false);
+      setEditingId(null);
       setFormData({ company: "", role: "", description: "", startDate: "", endDate: "", isCurrent: false });
       fetchExperiences();
     } catch (error: any) {
@@ -128,7 +148,7 @@ export default function ExperiencePage() {
         <Card className="border-primary bg-primary/5">
           <form onSubmit={handleSave}>
             <CardHeader>
-              <CardTitle>Add New Experience</CardTitle>
+              <CardTitle>{editingId ? "Edit Experience" : "Add New Experience"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -196,7 +216,7 @@ export default function ExperiencePage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => toast.info("Edit mode not implemented in mock")}>
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(exp)}>
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950" onClick={() => handleDelete(exp.id)}>

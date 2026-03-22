@@ -29,8 +29,9 @@ export default function EducationPage() {
   const [educations, setEducations] = useState<Education[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
   const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
   const [formData, setFormData] = useState({
     institution: "",
     degree: "",
@@ -71,6 +72,20 @@ export default function EducationPage() {
     }
   };
 
+  const handleEdit = (edu: Education) => {
+    setFormData({
+      institution: edu.institution,
+      degree: edu.degree,
+      field: edu.field,
+      startDate: edu.startDate,
+      endDate: edu.endDate || "",
+      gpa: edu.gpa || "",
+      isCurrent: edu.isCurrent,
+    });
+    setEditingId(edu.id);
+    setIsEditing(true);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -81,15 +96,23 @@ export default function EducationPage() {
         endDate: formData.isCurrent ? null : formData.endDate,
         updatedAt: new Date().toISOString()
       };
-      await addDoc(collection(db, "profiles", user.uid, "educations"), payload);
-      toast.success("Education added!");
+
+      if (editingId) {
+        await updateDoc(doc(db, "profiles", user.uid, "educations", editingId), payload);
+        toast.success("Education updated!");
+      } else {
+        await addDoc(collection(db, "profiles", user.uid, "educations"), payload);
+        toast.success("Education added!");
+      }
+
       setIsEditing(false);
+      setEditingId(null);
       setFormData({ institution: "", degree: "", field: "", startDate: "", endDate: "", gpa: "", isCurrent: false });
       fetchEducation();
-      systemLog("info", "User added education entry");
+      systemLog("info", "User updated education entry");
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
-      systemLog("error", "Failed to add education", error);
+      systemLog("error", "Failed to save education", error);
     } finally {
       setSaving(false);
     }
@@ -129,7 +152,7 @@ export default function EducationPage() {
         <Card className="border-primary bg-primary/5">
           <form onSubmit={handleSave}>
             <CardHeader>
-              <CardTitle>Add Academic History</CardTitle>
+              <CardTitle>{editingId ? "Edit Academic History" : "Add Academic History"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -200,6 +223,9 @@ export default function EducationPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(edu)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950" onClick={() => handleDelete(edu.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>

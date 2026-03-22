@@ -8,9 +8,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Cpu } from "lucide-react";
+import { Loader2, Plus, Trash2, Cpu, Pencil } from "lucide-react";
 import { systemLog } from "@/lib/logger";
 
 type Skill = {
@@ -32,6 +32,7 @@ export default function SkillsPage() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [name, setName] = useState("");
   const [proficiency, setProficiency] = useState("INTERMEDIATE");
@@ -58,19 +59,39 @@ export default function SkillsPage() {
     fetchSkills();
   }, [user]);
 
-  const handleAddSkill = async (e: React.FormEvent) => {
+  const handleEdit = (skill: Skill) => {
+    setName(skill.name);
+    setProficiency(skill.proficiency);
+    setCategory(skill.category);
+    setEditingId(skill.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveSkill = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !name) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "profiles", user.uid, "skills"), {
+      const payload = {
         name,
         proficiency,
         category,
-        createdAt: new Date().toISOString()
-      });
-      toast.success("Skill added!");
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingId) {
+        await updateDoc(doc(db, "profiles", user.uid, "skills", editingId), payload);
+        toast.success("Skill updated!");
+      } else {
+        await addDoc(collection(db, "profiles", user.uid, "skills"), {
+          ...payload,
+          createdAt: new Date().toISOString()
+        });
+        toast.success("Skill added!");
+      }
+
       setName("");
+      setEditingId(null);
       fetchSkills();
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -110,9 +131,9 @@ export default function SkillsPage() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6">
-          <form onSubmit={handleAddSkill} className="flex flex-col md:flex-row gap-4 items-end">
+          <form onSubmit={handleSaveSkill} className="flex flex-col md:flex-row gap-4 items-end">
             <div className="space-y-2 flex-grow w-full md:w-auto">
-              <Label>Skill Name</Label>
+              <Label>{editingId ? "Edit Skill" : "Add New Skill"}</Label>
               <Input placeholder="e.g. React.js, Python, Leadership" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             
@@ -167,9 +188,14 @@ export default function SkillsPage() {
                         {skill.proficiency}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(skill.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(skill)} className="h-8 w-8 text-muted-foreground hover:text-primary">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(skill.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Trophy, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Trash2, Trophy, ExternalLink, Pencil } from "lucide-react";
 import { systemLog } from "@/lib/logger";
 
 type Certification = {
@@ -25,6 +25,8 @@ export default function CertificationsPage() {
   const [certs, setCerts] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -57,16 +59,41 @@ export default function CertificationsPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAddCert = async (e: React.FormEvent) => {
+  const handleEdit = (cert: Certification) => {
+    setFormData({
+      name: cert.name,
+      issuer: cert.issuer,
+      issueDate: cert.issueDate,
+      credentialUrl: cert.credentialUrl || "",
+    });
+    setEditingId(cert.id);
+    setIsEditing(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveCert = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "profiles", user.uid, "certifications"), { ...formData });
-      toast.success("Certification added!");
+      const payload = { ...formData, updatedAt: new Date().toISOString() };
+      
+      if (editingId) {
+        await updateDoc(doc(db, "profiles", user.uid, "certifications", editingId), payload);
+        toast.success("Certification updated!");
+      } else {
+        await addDoc(collection(db, "profiles", user.uid, "certifications"), {
+          ...payload,
+          createdAt: new Date().toISOString()
+        });
+        toast.success("Certification added!");
+      }
+
+      setIsEditing(false);
+      setEditingId(null);
       setFormData({ name: "", issuer: "", issueDate: "", credentialUrl: "" });
       fetchCerts();
-      systemLog("info", "User added certification");
+      systemLog("info", "User saved certification");
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
     } finally {
@@ -98,9 +125,9 @@ export default function CertificationsPage() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6">
-          <form onSubmit={handleAddCert} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+          <form onSubmit={handleSaveCert} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
             <div className="space-y-2 flex-grow min-w-[200px]">
-              <Label>Certificate Name</Label>
+              <Label>{editingId ? "Edit Certificate Name" : "Certificate Name"}</Label>
               <Input name="name" placeholder="e.g. AWS Solutions Architect" value={formData.name} onChange={handleChange} required />
             </div>
             <div className="space-y-2 flex-grow min-w-[150px]">
@@ -144,9 +171,14 @@ export default function CertificationsPage() {
                          </a>
                       )}
                    </div>
-                   <Button variant="ghost" size="icon" onClick={() => handleDelete(cert.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
-                      <Trash2 className="h-4 w-4" />
-                   </Button>
+                   <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(cert)} className="h-8 w-8 text-muted-foreground hover:text-primary">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(cert.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                   </div>
                  </CardContent>
               </Card>
             ))}

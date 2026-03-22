@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Languages } from "lucide-react";
+import { Loader2, Plus, Trash2, Languages, Pencil } from "lucide-react";
 import { systemLog } from "@/lib/logger";
 
 type Language = {
@@ -23,6 +23,7 @@ export default function LanguagesPage() {
   const [langs, setLangs] = useState<Language[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   const [name, setName] = useState("");
   const [proficiency, setProficiency] = useState("FLUENT");
@@ -47,17 +48,37 @@ export default function LanguagesPage() {
     fetchLangs();
   }, [user]);
 
-  const handleAddLang = async (e: React.FormEvent) => {
+  const handleEdit = (lang: Language) => {
+    setName(lang.name);
+    setProficiency(lang.proficiency);
+    setEditingId(lang.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveLang = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !name) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "profiles", user.uid, "languages"), {
+      const payload = {
         name,
         proficiency,
-      });
-      toast.success("Language added!");
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingId) {
+        await updateDoc(doc(db, "profiles", user.uid, "languages", editingId), payload);
+        toast.success("Language updated!");
+      } else {
+        await addDoc(collection(db, "profiles", user.uid, "languages"), {
+          ...payload,
+          createdAt: new Date().toISOString()
+        });
+        toast.success("Language added!");
+      }
+
       setName("");
+      setEditingId(null);
       fetchLangs();
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -90,9 +111,9 @@ export default function LanguagesPage() {
 
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6">
-          <form onSubmit={handleAddLang} className="flex flex-col md:flex-row gap-4 items-end">
+          <form onSubmit={handleSaveLang} className="flex flex-col md:flex-row gap-4 items-end">
             <div className="space-y-2 flex-grow">
-              <Label>Language Name</Label>
+              <Label>{editingId ? "Edit Language Name" : "Language Name"}</Label>
               <Input placeholder="e.g. English, Indonesian, Japanese..." value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             
@@ -131,9 +152,14 @@ export default function LanguagesPage() {
                     <div className="font-bold text-lg">{lang.name}</div>
                     <div className="text-sm text-primary font-medium mt-1">{lang.proficiency}</div>
                  </div>
-                 <Button variant="ghost" size="icon" onClick={() => handleDelete(lang.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
-                    <Trash2 className="h-4 w-4" />
-                 </Button>
+                 <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(lang)} className="h-8 w-8 text-muted-foreground hover:text-primary">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(lang.id)} className="h-8 w-8 text-muted-foreground hover:text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                 </div>
               </div>
             ))}
           </div>

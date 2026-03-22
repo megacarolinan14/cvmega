@@ -27,23 +27,7 @@ export default function LoginPage() {
     setIsSigningIn(true);
     const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, provider);
-      
-      // Ensure profile exists in Firestore
-      const userDocRef = doc(db, "profiles", result.user.uid);
-      const docSnap = await getDoc(userDocRef);
-      
-      if (!docSnap.exists()) {
-        // Create initial profile
-        await setDoc(userDocRef, {
-          username: result.user.email?.split('@')[0] || result.user.uid.slice(0, 8),
-          headline: "Professional Title",
-          themePrimaryColor: "0 84.2% 60.2%", // Red default
-          createdAt: new Date().toISOString()
-        });
-        await systemLog("info", `New user registered via Google: ${result.user.email}`);
-      }
-
+      await signInWithPopup(auth, provider);
       toast.success("Successfully logged in!");
       router.push("/dashboard");
     } catch (error: any) {

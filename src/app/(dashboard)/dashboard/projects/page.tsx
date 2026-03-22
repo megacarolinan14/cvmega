@@ -8,9 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/components/auth-provider";
 import { db } from "@/lib/firebase";
-import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy } from "firebase/firestore";
+import { collection, doc, getDocs, addDoc, deleteDoc, query, orderBy, updateDoc } from "firebase/firestore";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Layers, ExternalLink, Github } from "lucide-react";
+import { Loader2, Plus, Trash2, Layers, ExternalLink, Github, Pencil } from "lucide-react";
 import { systemLog } from "@/lib/logger";
 
 type Project = {
@@ -29,6 +29,7 @@ export default function ProjectsPage() {
   const [saving, setSaving] = useState(false);
   
   const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -62,17 +63,41 @@ export default function ProjectsPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleEdit = (project: Project) => {
+    setFormData({
+      title: project.title,
+      description: project.description,
+      url: project.url || "",
+      githubUrl: project.githubUrl || "",
+      imageUrl: project.imageUrl || "",
+    });
+    setEditingId(project.id);
+    setIsEditing(true);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "profiles", user.uid, "projects"), {
+      const payload = {
         ...formData,
-        createdAt: new Date().toISOString()
-      });
-      toast.success("Project added!");
+        updatedAt: new Date().toISOString()
+      };
+
+      if (editingId) {
+        await updateDoc(doc(db, "profiles", user.uid, "projects", editingId), payload);
+        toast.success("Project updated!");
+      } else {
+        await addDoc(collection(db, "profiles", user.uid, "projects"), {
+          ...payload,
+          createdAt: new Date().toISOString()
+        });
+        toast.success("Project added!");
+      }
+
       setIsEditing(false);
+      setEditingId(null);
       setFormData({ title: "", description: "", url: "", githubUrl: "", imageUrl: "" });
       fetchProjects();
     } catch (error: any) {
@@ -115,7 +140,7 @@ export default function ProjectsPage() {
         <Card className="border-primary bg-primary/5 shadow-sm">
           <form onSubmit={handleSave}>
             <CardHeader>
-              <CardTitle>Create Project Showcase</CardTitle>
+              <CardTitle>{editingId ? "Edit Project Showcase" : "Create Project Showcase"}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,9 +220,14 @@ export default function ProjectsPage() {
                    </a>
                  )}
                </div>
-               <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8" onClick={() => handleDelete(project.id)}>
-                 <Trash2 className="h-4 w-4" />
-               </Button>
+               <div className="flex gap-2">
+                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary h-8 w-8" onClick={() => handleEdit(project)}>
+                   <Pencil className="h-4 w-4" />
+                 </Button>
+                 <Button variant="ghost" size="icon" className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950 h-8 w-8" onClick={() => handleDelete(project.id)}>
+                   <Trash2 className="h-4 w-4" />
+                 </Button>
+               </div>
             </CardFooter>
           </Card>
         ))}
