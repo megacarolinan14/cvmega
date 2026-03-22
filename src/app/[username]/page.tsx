@@ -31,7 +31,18 @@ export default async function PublicCVPage({
   const projects = projSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   const certs = certSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   const languages = langSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  const skills = skillsSnap.docs.map(doc => doc.data());
+  const skills = skillsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  // Dynamic Theme Styling
+  const primaryColor = profile.themePrimaryColor || "0 84.2% 60.2%";
+  const fontFamily = profile.fontFamily || "inter";
+  
+  const fontMap: Record<string, string> = {
+    inter: "'Inter', sans-serif",
+    roboto: "'Roboto', sans-serif",
+    playfair: "'Playfair Display', serif",
+    "fira-code": "'Fira Code', monospace",
+  };
 
   // Function to calculate duration
   const getDuration = (start: string, end: string | null, isCurrent: boolean) => {
@@ -52,7 +63,13 @@ export default async function PublicCVPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#121212] py-8 px-4 sm:px-8 flex justify-center selection:bg-primary/30">
+    <div 
+      className="min-h-screen bg-[#F8F9FB] dark:bg-[#121212] py-8 px-4 sm:px-8 flex justify-center selection:bg-primary/30"
+      style={{ 
+        "--primary": primaryColor,
+        fontFamily: fontMap[fontFamily] || fontMap.inter
+      } as React.CSSProperties}
+    >
       <div className="w-full max-w-[1200px] flex flex-col lg:flex-row gap-8 items-start">
         
         {/* Left/Center Column - Main Content */}
@@ -138,25 +155,30 @@ export default async function PublicCVPage({
           {experiences.length > 0 && (
             <div className="bg-white dark:bg-[#1e1e1e] rounded-[2rem] p-8 shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
               <h2 className="text-xl font-bold text-foreground mb-6">Experience</h2>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {experiences.map((exp: any, i: number) => (
-                  <div key={exp.id} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${i !== experiences.length - 1 ? "pb-6 border-b border-border/50" : ""}`}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-bold text-lg text-foreground">{exp.company}</h3>
-                        {/* Fake location tags based on image reference */}
-                        <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
-                          i % 2 === 0 ? "bg-pink-100 text-pink-700 dark:bg-pink-500/20 dark:text-pink-300" 
-                          : "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
-                        }`}>
-                          {i % 2 === 0 ? "Remote" : "On-Site"}
-                        </span>
+                  <div key={exp.id} className={`flex flex-col gap-2 ${i !== experiences.length - 1 ? "pb-8 border-b border-border/50" : ""}`}>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="font-bold text-lg text-foreground">{exp.company}</h3>
+                          <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
+                            i % 2 === 0 ? "bg-primary/20 text-primary" 
+                            : "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300"
+                          }`}>
+                            {exp.role}
+                          </span>
+                        </div>
+                        <div className="text-sm font-medium text-foreground/50">
+                          {exp.startDate} - {exp.isCurrent ? "Present" : exp.endDate} ({getDuration(exp.startDate, exp.endDate, exp.isCurrent)})
+                        </div>
                       </div>
-                      <p className="text-foreground/70 font-medium">{exp.role}</p>
                     </div>
-                    <div className="text-sm font-medium pr-4 text-foreground/50 shrink-0 sm:text-right">
-                      {getDuration(exp.startDate, exp.endDate, exp.isCurrent)}
-                    </div>
+                    {exp.description && (
+                      <p className="text-foreground/70 text-sm leading-relaxed whitespace-pre-wrap mt-2">
+                        {exp.description}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -173,9 +195,44 @@ export default async function PublicCVPage({
                     <div className="flex-1">
                       <h3 className="font-bold text-lg text-foreground mb-1">{edu.institution}</h3>
                       <p className="text-foreground/70 font-medium">{edu.degree} in {edu.field}</p>
+                      {edu.gpa && <p className="text-xs text-primary font-bold mt-1">GPA: {edu.gpa}</p>}
                     </div>
                     <div className="text-sm font-medium text-foreground/50 shrink-0 sm:text-right">
                       {new Date(edu.startDate).getFullYear()} - {edu.isCurrent ? "Present" : new Date(edu.endDate).getFullYear()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Projects Section */}
+          {projects.length > 0 && (
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-[2rem] p-8 shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
+              <h2 className="text-xl font-bold text-foreground mb-6">Portfolio & Projects</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {projects.map((proj: any) => (
+                  <div key={proj.id} className="group border rounded-2xl overflow-hidden bg-muted/10 hover:border-primary/50 transition-all flex flex-col">
+                    {proj.imageUrl && (
+                      <div className="h-40 overflow-hidden">
+                        <img src={proj.imageUrl} alt={proj.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      </div>
+                    )}
+                    <div className="p-4 flex-grow space-y-2">
+                      <h3 className="font-bold text-foreground">{proj.title}</h3>
+                      <p className="text-xs text-foreground/60 line-clamp-3">{proj.description}</p>
+                    </div>
+                    <div className="p-4 pt-0 flex gap-3">
+                      {proj.url && (
+                        <a href={proj.url} target="_blank" className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-1">
+                          <ExternalLink className="w-3 h-3" /> Live
+                        </a>
+                      )}
+                      {proj.githubUrl && (
+                        <a href={proj.githubUrl} target="_blank" className="text-[10px] font-bold uppercase tracking-widest text-foreground/50 hover:text-foreground flex items-center gap-1">
+                          <Github className="w-3 h-3" /> Code
+                        </a>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -191,14 +248,35 @@ export default async function PublicCVPage({
           {/* Top Skills Card */}
           {skills.length > 0 && (
             <div className="bg-white dark:bg-[#1e1e1e] rounded-[2rem] p-8 shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
-              <h2 className="text-xl font-bold text-foreground mb-6">Top Skills</h2>
-              <div className="flex flex-wrap gap-2.5">
+              <h2 className="text-xl font-bold text-foreground mb-6">Skills & Capabilities</h2>
+              <div className="flex flex-wrap gap-2">
                 {skills.map((skill: any) => (
                   <div 
                     key={skill.name} 
-                    className="px-4 py-2 border-2 border-border/60 hover:border-foreground/20 dark:border-border dark:hover:border-foreground/40 rounded-xl text-sm font-semibold text-foreground/80 transition-colors cursor-default"
+                    className="px-3 py-1.5 bg-muted/30 border border-border/50 rounded-lg text-xs font-bold text-foreground/70"
                   >
                     {skill.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Certifications Card */}
+          {certs.length > 0 && (
+            <div className="bg-white dark:bg-[#1e1e1e] rounded-[2rem] p-8 shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
+              <h2 className="text-xl font-bold text-foreground mb-6">Certifications</h2>
+              <div className="space-y-4">
+                {certs.map((cert: any) => (
+                  <div key={cert.id} className="space-y-1">
+                    <div className="font-bold text-foreground text-sm flex items-start justify-between gap-2">
+                      {cert.name}
+                      {cert.credentialUrl && (
+                        <a href={cert.credentialUrl} target="_blank"><ExternalLink className="w-3 h-3 text-primary mt-1" /></a>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-primary font-bold">{cert.issuer}</div>
+                    <div className="text-[10px] text-foreground/40">{cert.issueDate}</div>
                   </div>
                 ))}
               </div>
@@ -208,39 +286,14 @@ export default async function PublicCVPage({
           {/* Languages Card */}
           {languages.length > 0 && (
             <div className="bg-white dark:bg-[#1e1e1e] rounded-[2rem] p-8 shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
-              <h2 className="text-xl font-bold text-foreground mb-6">Languages</h2>
-              <div className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground mb-4">Languages</h2>
+              <div className="space-y-3">
                 {languages.map((lang: any) => (
-                  <div key={lang.id} className="flex justify-between items-center">
-                    <span className="font-semibold text-foreground/80">{lang.name}</span>
-                    <span className="text-sm text-foreground/50 font-medium">{lang.proficiency}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Projects Card (Acting as reviews replacement visually) */}
-          {projects.length > 0 && (
-            <div className="bg-white dark:bg-[#1e1e1e] rounded-[2rem] p-8 shadow-[0_2px_20px_rgb(0,0,0,0.04)] dark:shadow-none">
-              {/* Fake Segmented Control */}
-              <div className="flex items-center bg-muted/50 rounded-xl p-1 mb-8">
-                <div className="flex-1 text-center py-2 bg-background shadow-sm rounded-lg text-sm font-bold text-foreground">Projects</div>
-                <div className="flex-1 text-center py-2 text-sm font-semibold text-foreground/50">Certifications</div>
-              </div>
-              
-              <div className="space-y-6">
-                {projects.slice(0, 3).map((proj: any) => (
-                  <div key={proj.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                       <div className="font-bold text-foreground">{proj.title}</div>
-                       {proj.url && (
-                         <a href={proj.url} target="_blank" className="text-xs text-primary font-bold hover:underline">Link</a>
-                       )}
-                    </div>
-                    <p className="text-sm text-foreground/60 leading-relaxed font-medium line-clamp-3">
-                      {proj.description}
-                    </p>
+                  <div key={lang.id} className="flex justify-between items-center text-sm">
+                    <span className="font-bold text-foreground/80">{lang.name}</span>
+                    <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted/50 text-foreground/40`}>
+                      {lang.proficiency}
+                    </span>
                   </div>
                 ))}
               </div>
