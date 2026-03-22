@@ -1,7 +1,7 @@
 import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Mail, Phone, ExternalLink, Calendar, Layers, Trophy, GraduationCap, Languages, Github, Share2, MoreVertical, BadgeCheck, LayoutDashboard } from "lucide-react";
+import { MapPin, Mail, Phone, ExternalLink, Calendar, Layers, Trophy, GraduationCap, Languages, Github, Share2, MoreVertical, BadgeCheck, LayoutDashboard, Instagram, Linkedin, Twitter, Globe, Link as LinkIcon } from "lucide-react";
 
 export default async function PublicCVPage({
   params,
@@ -17,13 +17,14 @@ export default async function PublicCVPage({
   const profile = userDoc.data();
   const uid = userDoc.id;
 
-  const [expSnap, eduSnap, skillsSnap, projSnap, certSnap, langSnap] = await Promise.all([
+  const [expSnap, eduSnap, skillsSnap, projSnap, certSnap, langSnap, socialSnap] = await Promise.all([
     adminDb.collection('profiles').doc(uid).collection('experiences').orderBy('startDate', 'desc').get(),
     adminDb.collection('profiles').doc(uid).collection('educations').orderBy('startDate', 'desc').get(),
     adminDb.collection('profiles').doc(uid).collection('skills').orderBy('category').get(),
     adminDb.collection('profiles').doc(uid).collection('projects').orderBy('createdAt', 'desc').get(),
     adminDb.collection('profiles').doc(uid).collection('certifications').orderBy('issueDate', 'desc').get(),
     adminDb.collection('profiles').doc(uid).collection('languages').get(),
+    adminDb.collection('profiles').doc(uid).collection('socials').get(),
   ]);
 
   const experiences = expSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -32,6 +33,18 @@ export default async function PublicCVPage({
   const certs = certSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   const languages = langSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   const skills = skillsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const socials = socialSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+  // ... [dynamic theme, getDuration, calculateAge] ...
+
+  const socialIconMap: Record<string, any> = {
+    instagram: Instagram,
+    linkedin: Linkedin,
+    github: Github,
+    twitter: Twitter,
+    portfolio: Globe,
+    other: LinkIcon,
+  };
 
   // Dynamic Theme Styling
   const primaryColor = profile.themePrimaryColor || "0 84.2% 60.2%";
@@ -43,7 +56,6 @@ export default async function PublicCVPage({
     playfair: "'Playfair Display', serif",
     "fira-code": "'Fira Code', monospace",
   };
-
   // Function to calculate duration
   const getDuration = (start: string, end: string | null, isCurrent: boolean) => {
     if (!start) return "";
@@ -61,6 +73,21 @@ export default async function PublicCVPage({
     if (years > 0) return `${years} yrs`;
     return `${months} mos`;
   };
+
+  // Function to calculate age
+  const calculateAge = (birthDate: string) => {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+    return age;
+  };
+
+  const age = calculateAge(profile.birthDate);
 
   return (
     <div 
@@ -114,7 +141,7 @@ export default async function PublicCVPage({
               
               <p className="text-sm text-foreground/60 font-medium mb-1">@{profile.username}</p>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center justify-center gap-2 mb-2">
-                {profile.name || profile.username} 
+                {profile.displayName || profile.username || profile.name} 
                 <BadgeCheck className="w-6 h-6 text-pink-500 fill-pink-500/20" />
               </h1>
               
@@ -122,11 +149,32 @@ export default async function PublicCVPage({
                 {profile.headline}
               </p>
               
-              <div className="flex items-center gap-3 text-sm text-foreground/50 font-medium mb-8">
+              <div className="flex items-center gap-3 text-sm text-foreground/50 font-medium mb-6">
                 {profile.location && <span>{profile.location}</span>}
-                {profile.location && <span>|</span>}
-                <span>Joined {new Date(profile.createdAt || Date.now()).toLocaleDateString([], { month: 'long', year: 'numeric' })}</span>
+                {profile.location && age && <span>|</span>}
+                {age && <span>{age} Years Old</span>}
               </div>
+
+              {/* Social Icons */}
+              {socials.length > 0 && (
+                <div className="flex items-center gap-4 mb-8">
+                  {socials.map((social: any) => {
+                    const Icon = socialIconMap[social.platform] || LinkIcon;
+                    return (
+                      <a 
+                        key={social.id} 
+                        href={social.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="w-10 h-10 rounded-xl bg-muted/50 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all hover:scale-110"
+                        title={social.platform}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="flex items-center gap-4">
                 <a href={`mailto:hello@example.com`} className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all shadow-md shadow-primary/20 active:scale-95">

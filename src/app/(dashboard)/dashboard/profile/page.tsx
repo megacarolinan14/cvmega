@@ -26,6 +26,7 @@ export default function ProfileSettingsPage() {
     location: "",
     phone: "",
     photoUrl: "",
+    birthDate: "",
     themePrimaryColor: "0 84.2% 60.2%"
   });
 
@@ -44,6 +45,7 @@ export default function ProfileSettingsPage() {
             location: data.location || "",
             phone: data.phone || "",
             photoUrl: data.photoUrl || "",
+            birthDate: data.birthDate || "",
             themePrimaryColor: data.themePrimaryColor || "0 84.2% 60.2%"
           });
         }
@@ -159,6 +161,10 @@ export default function ProfileSettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input id="phone" name="phone" value={formData.phone} onChange={handleChange} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="birthDate">Birth Date (For Age Display)</Label>
+                <Input id="birthDate" name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} />
               </div>
             </div>
 

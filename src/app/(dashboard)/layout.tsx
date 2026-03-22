@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { 
   FileText, User, Briefcase, GraduationCap, Cpu, 
   Layers, Trophy, Languages, Settings, LogOut, 
-  Terminal, Users
+  Terminal, Users, Share2
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle"; 
 import { useAuth } from "@/components/auth-provider";
@@ -22,6 +22,7 @@ const sidebarLinks = [
   { href: "/dashboard/projects", icon: Layers, title: "Projects" },
   { href: "/dashboard/certifications", icon: Trophy, title: "Certifications" },
   { href: "/dashboard/languages", icon: Languages, title: "Languages" },
+  { href: "/dashboard/socials", icon: Share2, title: "Social Media" },
   { href: "/dashboard/users", icon: Users, title: "Manage Users" },
   { href: "/dashboard/logs", icon: Terminal, title: "System Logs" },
   { href: "/dashboard/settings", icon: Settings, title: "Settings" },
