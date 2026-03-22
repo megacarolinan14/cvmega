@@ -1,6 +1,4 @@
-import { db } from "@/lib/db";
-import { profile } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { adminDb } from "@/lib/firebase-admin";
 import { notFound } from "next/navigation";
 
 export default async function PublicCVLayout({
@@ -12,14 +10,14 @@ export default async function PublicCVLayout({
 }) {
   const { username } = await params;
   
-  // Fetch user profile to get their theme configuration
-  const userProfile = await db.query.profile.findFirst({
-    where: eq(profile.username, username),
-  });
+  // Fetch user profile from Firestore Admin SDK
+  const snapshot = await adminDb.collection('profiles').where('username', '==', username).limit(1).get();
 
-  if (!userProfile) {
+  if (snapshot.empty) {
     notFound();
   }
+
+  const userProfile = snapshot.docs[0].data();
 
   // Inject user's custom primary color dynamically using CSS variables
   const themePrimaryColor = userProfile.themePrimaryColor || "0 84.2% 60.2%"; // Fallback to Red

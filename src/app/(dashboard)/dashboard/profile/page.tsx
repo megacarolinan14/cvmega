@@ -6,11 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { uploadFileToFirebase } from "@/lib/upload"; // We'll create this utility next
+import { uploadFileToFirebase } from "@/lib/upload";
+import { useAuth } from "@/components/auth-provider";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { toast } from "sonner";
 import { Loader2, UploadCloud } from "lucide-react";
 
 export default function ProfileSettingsPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -26,27 +30,31 @@ export default function ProfileSettingsPage() {
   });
 
   useEffect(() => {
-    fetch("/api/cv/profile")
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data) {
+    if (!user) return;
+    const fetchProfile = async () => {
+      try {
+        const docRef = doc(db, "profiles", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
           setFormData({
-            username: json.data.username || "",
-            headline: json.data.headline || "",
-            bio: json.data.bio || "",
-            location: json.data.location || "",
-            phone: json.data.phone || "",
-            photoUrl: json.data.photoUrl || "",
-            themePrimaryColor: json.data.themePrimaryColor || "0 84.2% 60.2%"
+            username: data.username || "",
+            headline: data.headline || "",
+            bio: data.bio || "",
+            location: data.location || "",
+            phone: data.phone || "",
+            photoUrl: data.photoUrl || "",
+            themePrimaryColor: data.themePrimaryColor || "0 84.2% 60.2%"
           });
         }
-        setLoading(false);
-      })
-      .catch(() => {
+      } catch (error) {
         toast.error("Failed to load profile");
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -54,23 +62,21 @@ export default function ProfileSettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setSaving(true);
     let finalPhotoUrl = formData.photoUrl;
 
     try {
       if (photoFile) {
         toast.info("Uploading photo...");
-        // upload to 'avatars/{timestamp}-{filename}' path
-        finalPhotoUrl = await uploadFileToFirebase(photoFile, `avatars/${Date.now()}-${photoFile.name}`);
+        finalPhotoUrl = await uploadFileToFirebase(photoFile, `avatars/${user.uid}-${Date.now()}`);
       }
 
-      const res = await fetch("/api/cv/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, photoUrl: finalPhotoUrl }),
-      });
-
-      if (!res.ok) throw new Error("Failed to save profile");
+      await setDoc(doc(db, "profiles", user.uid), {
+        ...formData,
+        photoUrl: finalPhotoUrl,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
 
       setFormData((prev) => ({ ...prev, photoUrl: finalPhotoUrl }));
       toast.success("Profile updated successfully!");

@@ -12,8 +12,6 @@ export const createFirebaseAdminApp = () => {
     return admin.app();
   }
   
-  // Conditionally initialize based on whether the dummy key is used or real key
-  // Avoid errors during build
   try {
     return admin.initializeApp({
       credential: admin.credential.cert(firebaseAdminConfig),
@@ -25,4 +23,5 @@ export const createFirebaseAdminApp = () => {
 
 export const adminApp = createFirebaseAdminApp();
 export const adminAuth = adminApp.auth();
+export const adminDb = adminApp.firestore();
 export const adminStorage = adminApp.storage();

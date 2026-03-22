@@ -1,6 +1,13 @@
+"use client";
+
 import Link from "next/link";
-import { FileText, User, Briefcase, GraduationCap, Cpu, Layers, Trophy, Languages, Settings } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { FileText, User, Briefcase, GraduationCap, Cpu, Layers, Trophy, Languages, Settings, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle"; // we will create this next
+import { useAuth } from "@/components/auth-provider";
+import { auth } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: FileText },
@@ -19,6 +26,23 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!user) {
+    return null; // Will redirect shortly
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
       {/* Sidebar (Desktop) */}
@@ -53,8 +77,9 @@ export default function DashboardLayout({
           <div className="sm:hidden font-semibold text-primary">CV-Mega</div>
           <div className="flex items-center gap-4">
              <ThemeToggle />
-             <div className="h-8 w-8 rounded-full bg-muted border flex items-center justify-center cursor-pointer">
-               <User className="h-4 w-4" />
+             <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-red-500 transition-colors" onClick={() => signOut(auth)}>
+               <LogOut className="h-4 w-4" />
+               <span className="text-sm font-medium hidden sm:inline">Logout</span>
              </div>
           </div>
         </header>

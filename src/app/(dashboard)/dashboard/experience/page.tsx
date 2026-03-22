@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { useAuth } from "@/components/auth-provider";
+import { db } from "@/lib/firebase";
+import { collection, doc, getDocs, addDoc, deleteDoc, updateDoc, query, orderBy } from "firebase/firestore";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
 
@@ -20,11 +23,11 @@ type Experience = {
 };
 
 export default function ExperiencePage() {
+  const { user } = useAuth();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
-  // Minimalist form state for new/edit
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     company: "",
@@ -35,23 +38,27 @@ export default function ExperiencePage() {
     isCurrent: false,
   });
 
-  const fetchExperiences = () => {
+  const fetchExperiences = async () => {
+    if (!user) return;
     setLoading(true);
-    fetch("/api/cv/experience")
-      .then((res) => res.json())
-      .then((json) => {
-        setExperiences(json.data || []);
-        setLoading(false);
-      })
-      .catch(() => {
-        toast.error("Failed to load experiences");
-        setLoading(false);
+    try {
+      const q = query(collection(db, "profiles", user.uid, "experiences"), orderBy("startDate", "desc"));
+      const querySnapshot = await getDocs(q);
+      const data: Experience[] = [];
+      querySnapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() } as Experience);
       });
+      setExperiences(data);
+    } catch (error) {
+      toast.error("Failed to load experiences");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchExperiences();
-  }, []);
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -64,21 +71,17 @@ export default function ExperiencePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setSaving(true);
     
     try {
       const payload = {
         ...formData,
         endDate: formData.isCurrent ? null : formData.endDate,
+        updatedAt: new Date().toISOString()
       };
 
-      const res = await fetch("/api/cv/experience", {
-        method: "POST", // In a real app we'd differentiate POST vs PATCH for edits
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error("Failed to save experience");
+      await addDoc(collection(db, "profiles", user.uid, "experiences"), payload);
 
       toast.success("Experience added!");
       setIsEditing(false);
@@ -91,9 +94,16 @@ export default function ExperiencePage() {
     }
   };
 
-  // Mock delete since we don't have the DELETE endpoint yet
-  const handleDelete = (id: string) => {
-    toast.error("Delete endpoint not implemented yet in the mock api! (DEVIL Challenge)");
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    if (!confirm("Are you sure you want to delete this experience?")) return;
+    try {
+      await deleteDoc(doc(db, "profiles", user.uid, "experiences", id));
+      toast.success("Experience deleted");
+      setExperiences(prev => prev.filter(exp => exp.id !== id));
+    } catch (error) {
+      toast.error("Failed to delete experience");
+    }
   };
 
   if (loading && experiences.length === 0) {
