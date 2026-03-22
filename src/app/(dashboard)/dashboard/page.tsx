@@ -1,28 +1,46 @@
-import { db } from "@/lib/db";
-import { profile } from "@/lib/db/schema";
-import { auth } from "@/lib/auth";
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
-import { FileText, Eye, Settings } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAuth } from "@/components/auth-provider";
+import { db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { FileText, Eye, Settings, Loader2 } from "lucide-react";
 import Link from "next/link";
 
-export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers() // Next 15 awaits headers
-  });
+export default function DashboardPage() {
+  const { user, loading } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [fetching, setFetching] = useState(true);
 
-  if (!session) return null; // Handled by middleware redirect
+  useEffect(() => {
+    if (!user) return;
+    const fetchProfile = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, "profiles", user.uid));
+        if (docSnap.exists()) {
+          setProfile(docSnap.data());
+        }
+      } catch (error) {
+        console.error("Error fetching profile", error);
+      } finally {
+        setFetching(false);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
-  const userProfile = await db.query.profile.findFirst({
-    where: eq(profile.userId, session.user.id),
-  });
+  if (loading || fetching) {
+    return <div className="h-64 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
 
-  const isProfileComplete = !!userProfile?.username && !!userProfile?.headline;
+  if (!user) return null;
+
+  const isProfileComplete = !!profile?.username && !!profile?.headline;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold tracking-tight">Welcome back, {session.user.name.split(' ')[0]} 👋</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user.displayName?.split(' ')[0] || user.email?.split('@')[0]} 👋</h1>
         <p className="text-muted-foreground">Manage your majestic CV portfolio here.</p>
       </div>
 
@@ -40,7 +58,7 @@ export default async function DashboardPage() {
           </div>
           {isProfileComplete ? (
             <Link 
-               href={`/cv/${userProfile.username}`}
+               href={`/cv/${profile.username}`}
                target="_blank"
                className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90"
             >
