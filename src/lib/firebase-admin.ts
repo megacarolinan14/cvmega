@@ -1,10 +1,9 @@
 import * as admin from "firebase-admin";
 
-const firebaseAdminConfig = {
-  projectId: process.env.FIREBASE_PROJECT_ID || "dummy",
-  clientEmail: process.env.FIREBASE_CLIENT_EMAIL || "dummy@dummy.com",
-  // Safe replace to prevent crash if undefined during build
-  privateKey: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n") : "dummy_key",
+const formatPrivateKey = (key?: string) => {
+  if (!key) return undefined;
+  // Handle both escaped newlines from env vars and actual newlines
+  return key.replace(/\\n/g, "\n").replace(/"/g, ''); 
 };
 
 export const createFirebaseAdminApp = () => {
@@ -12,13 +11,21 @@ export const createFirebaseAdminApp = () => {
     return admin.app();
   }
   
-  try {
-    return admin.initializeApp({
-      credential: admin.credential.cert(firebaseAdminConfig),
-    });
-  } catch (error) {
-    return admin.initializeApp(); // Fallback
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
+
+  if (!projectId || !clientEmail || !privateKey) {
+    throw new Error(`Firebase Admin SDK configuration is incomplete. Project ID: ${!!projectId}, Client Email: ${!!clientEmail}, Private Key: ${!!privateKey}`);
   }
+
+  return admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    }),
+  });
 };
 
 export const adminApp = createFirebaseAdminApp();
