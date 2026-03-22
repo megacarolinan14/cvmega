@@ -20,8 +20,8 @@ try {
   console.error("Firebase Admin initialization failed:", error);
   adminInitError = error;
   if (!admin.apps.length) {
-    // Return a dummy app so the module doesn't crash during build
-    admin.initializeApp({ projectId: "dummy-fallback" }, "dummy");
+    // Return a dummy app as the DEFAULT app so the module doesn't crash during build
+    admin.initializeApp({ projectId: "dummy-fallback" });
   }
 }
 
