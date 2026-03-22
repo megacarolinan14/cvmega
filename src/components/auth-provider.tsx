@@ -10,15 +10,27 @@ import { systemLog } from "@/lib/logger";
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  pinVerified: boolean;
+  setPinVerified: (verified: boolean) => void;
 };
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  loading: true, 
+  pinVerified: false, 
+  setPinVerified: () => {} 
+});
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pinVerified, setPinVerified] = useState(false);
 
   useEffect(() => {
+    // Check session storage for existing verification
+    const stored = sessionStorage.getItem("cv_mega_pin_verified");
+    if (stored === "true") setPinVerified(true);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         // Automatically sync profile to Firestore
@@ -41,7 +53,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Update lastLogin on every successful session start
             await setDoc(userDocRef, { 
               lastLogin: serverTimestamp(),
-              // Update display name and photo if they exist in auth but not in doc
               displayName: docSnap.data().displayName || firebaseUser.displayName || "",
               photoUrl: docSnap.data().photoUrl || firebaseUser.photoURL || "" 
             }, { merge: true });
@@ -49,13 +60,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error: any) {
           console.error("Critical: Failed to sync user profile to Firestore:", error);
           systemLog("error", "Profile Sync Failed", { error: error.message });
-          // If it's a permission error, let the user know once
           if (error.code === 'permission-denied') {
             toast.error("Firebase Permission Denied: Please update your Firestore Rules.");
           }
         }
       }
-      
       setUser(firebaseUser);
       setLoading(false);
     });
@@ -63,8 +72,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  const handleSetPinVerified = (verified: boolean) => {
+    setPinVerified(verified);
+    if (verified) {
+      sessionStorage.setItem("cv_mega_pin_verified", "true");
+    } else {
+      sessionStorage.removeItem("cv_mega_pin_verified");
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, pinVerified, setPinVerified: handleSetPinVerified }}>
       {children}
     </AuthContext.Provider>
   );
