@@ -1,29 +1,27 @@
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "./firebase";
-
 export const uploadFileToFirebase = async (
   file: File,
   path: string,
   onProgress?: (progress: number) => void
 ): Promise<string> => {
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, file);
-
-  if (onProgress) {
-    uploadTask.on("state_changed", (snapshot) => {
-      const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-      onProgress(progress);
-    });
-  }
-
   try {
-    // Wait for the upload to complete
-    await uploadTask;
-    // Get and return the download URL
-    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error("Firebase Upload Error:", error);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("path", path);
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Upload failed");
+    }
+
+    const data = await response.json();
+    return data.url;
+  } catch (error: any) {
+    console.error("Upload error:", error);
     throw error;
   }
 };
