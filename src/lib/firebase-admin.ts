@@ -2,10 +2,22 @@ import * as admin from "firebase-admin";
 
 const formatPrivateKey = (key?: string) => {
   if (!key) return undefined;
-  // Handle both escaped newlines from env vars and actual newlines
-  let formatted = key.replace(/\\n/g, "\n").replace(/"/g, '').trim(); 
   
-  // If Vercel stripped newlines and it's all on one line (but contains BEGIN/END)
+  let formatted = key;
+  // If the user pasted the entire JSON object from Firebase Service Account
+  try {
+    const parsed = JSON.parse(key);
+    if (parsed.private_key) {
+      formatted = parsed.private_key;
+    }
+  } catch (e) {
+    // Not valid JSON, proceed as string
+  }
+
+  // Handle escaped newlines
+  formatted = formatted.replace(/\\n/g, "\n").replace(/"/g, '').trim(); 
+  
+  // Reconstruct if flattened
   if (formatted.startsWith('-----BEGIN PRIVATE KEY-----') && !formatted.includes('\n')) {
     const base64 = formatted
       .replace('-----BEGIN PRIVATE KEY-----', '')
@@ -17,6 +29,8 @@ const formatPrivateKey = (key?: string) => {
   
   return formatted;
 };
+
+export let adminInitError: Error | null = null;
 
 export const createFirebaseAdminApp = () => {
   if (admin.apps.length > 0) {
@@ -35,9 +49,11 @@ export const createFirebaseAdminApp = () => {
         privateKey,
       }),
     });
-  } catch (error) {
-    console.warn("Firebase Admin init failed with cert, falling back to default.", error);
-    return admin.initializeApp();
+  } catch (error: any) {
+    console.warn("Firebase Admin init failed with cert.", error.message);
+    adminInitError = error;
+    // Return a dummy app so the module doesn't crash during build
+    return admin.initializeApp({ projectId: "dummy-fallback" }, "dummy");
   }
 };
 
