@@ -94,12 +94,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </main>
       
       {/* Mobile Nav */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-white dark:bg-[#1e1e1e] border dark:border-border/50 rounded-2xl shadow-xl flex justify-around p-3 z-50 overflow-x-auto gap-2">
-         {sidebarLinks.slice(0, 5).map((link) => {
+      <div className="md:hidden fixed bottom-4 left-4 right-4 bg-white dark:bg-[#1e1e1e] border dark:border-border/50 rounded-2xl shadow-xl flex justify-start p-3 z-50 overflow-x-auto gap-2 no-scrollbar">
+         {sidebarLinks.map((link) => {
             const isActive = pathname === link.href;
             const Icon = link.icon;
             return (
-              <Link key={link.href} href={link.href} className={`p-3 shrink-0 rounded-xl transition-all ${isActive ? "bg-primary/20 text-primary" : "text-foreground/50"}`}>
+              <Link key={link.href} href={link.href} title={link.title} className={`p-3 shrink-0 rounded-xl transition-all ${isActive ? "bg-primary/20 text-primary" : "text-foreground/50 hover:bg-muted"}`}>
                 <Icon className={`w-6 h-6 ${isActive ? "fill-primary/20" : ""}`} />
               </Link>
             );
