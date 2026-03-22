@@ -135,7 +135,7 @@ export default function ExperiencePage() {
                   <Input id="startDate" name="startDate" type="date" value={formData.startDate} onChange={handleChange} required />
                 </div>
                 <div className="space-y-2">
-                  <Label flex gap-4 items-center>
+                  <Label className="flex gap-4 items-center">
                     <Input id="isCurrent" name="isCurrent" type="checkbox" checked={formData.isCurrent} onChange={handleChange} className="w-4 h-4 mt-1" />
                     I currently work here
                   </Label>
