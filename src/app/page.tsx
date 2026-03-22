@@ -74,15 +74,39 @@ export default async function LandingPage() {
   }
 
   if (queryError) {
+    const isNotFound = queryError.message?.includes("NOT_FOUND") || queryError.toString().includes("NOT_FOUND");
+    
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#121212] font-sans">
         <div className="max-w-3xl bg-[#1e1e1e] border border-orange-500/30 rounded-3xl p-8 space-y-6 shadow-2xl w-full">
-          <h1 className="text-3xl font-bold text-orange-500">Firebase Config Error</h1>
-          <p className="text-white/80 text-lg">The environment variables exist, but Firebase rejected the connection. Usually indicates a malformed Private Key.</p>
+          <h1 className="text-3xl font-bold text-orange-500">
+            {isNotFound ? "Firestore Database Not Found" : "Firebase Config Error"}
+          </h1>
+          <p className="text-white/80 text-lg">
+            {isNotFound 
+              ? "Project ID Anda benar dan berhasil terhubung, namun Database Firestore belum diaktifkan atau tidak ditemukan di proyek ini."
+              : "The environment variables exist, but Firebase rejected the connection."}
+          </p>
+          
           <div className="bg-black/50 p-4 rounded-xl font-mono text-sm text-red-400 overflow-auto max-h-64 whitespace-pre-wrap">
             {queryError.message || queryError.toString()}
           </div>
-          <p className="text-white/60">Check your FIREBASE_PRIVATE_KEY in Vercel. Ensure it matches exactly without weird quote formatting.</p>
+
+          {isNotFound && (
+            <div className="bg-blue-900/20 border border-blue-500/30 p-5 rounded-2xl space-y-3">
+              <h3 className="text-blue-400 font-bold flex items-center gap-2 text-lg">
+                💡 Cara Memperbaiki Terakhir (Hanya 1 Klik):
+              </h3>
+              <ol className="text-white/80 space-y-2 list-decimal list-inside text-sm leading-relaxed">
+                <li>Buka <a href={`https://console.firebase.google.com/project/${process.env.FIREBASE_PROJECT_ID}/firestore`} target="_blank" className="text-blue-400 underline italic">Firebase Console - Firestore</a></li>
+                <li>Klik tombol <b>"Create Database"</b></li>
+                <li>Pilih mode <b>"Production Mode"</b> dan pilih lokasi terdekat (misal: <i>asia-southeast2</i>).</li>
+                <li>Setelah selesai, <b>Refresh</b> halaman ini!</li>
+              </ol>
+            </div>
+          )}
+          
+          <p className="text-white/40 text-sm">Diagnostic Info: Firebase Admin Base64 Method is Active 🛡️</p>
         </div>
       </div>
     );
