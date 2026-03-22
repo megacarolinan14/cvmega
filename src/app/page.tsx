@@ -6,9 +6,13 @@ export const dynamic = 'force-dynamic';
 export default async function LandingPage() {
   const isEnvValid = process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PRIVATE_KEY;
   
+  const pk = process.env.FIREBASE_PRIVATE_KEY || '';
+  const pkPrefix = pk.length > 15 ? pk.substring(0, 15) + '...' : pk;
+  const pkLength = pk.length;
+
   if (!isEnvValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#121212] font-sans">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#121212] font-sans">
         <div className="max-w-2xl bg-[#1e1e1e] border border-red-500/30 rounded-3xl p-8 space-y-6 shadow-2xl w-full">
           <h1 className="text-3xl font-bold text-red-500">Missing Vercel Variables</h1>
           <p className="text-white/80 text-lg">Firebase Admin SDK cannot connect because credentials are missing on Vercel.</p>
@@ -25,18 +29,37 @@ export default async function LandingPage() {
 
   if (adminInitError) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-[#121212] font-sans">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-[#121212] font-sans">
         <div className="max-w-3xl bg-[#1e1e1e] border border-orange-500/30 rounded-3xl p-8 space-y-6 shadow-2xl w-full">
           <h1 className="text-3xl font-bold text-orange-500">Firebase Credential Error</h1>
           <p className="text-white/80 text-lg">The environment variables exist, but the Firebase library rejected the Private Key formatting.</p>
+          
           <div className="bg-black/50 p-4 rounded-xl font-mono text-sm text-red-400 overflow-auto max-h-64 whitespace-pre-wrap">
             {adminInitError.message || adminInitError.toString()}
           </div>
-          <p className="text-white/60">Try pasting just the `-----BEGIN PRIVATE KEY-----...` string, or the entire JSON payload. Our parser tries its best!</p>
+          
+          <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl font-mono text-sm text-blue-300 space-y-2">
+            <h3 className="font-bold text-blue-400 mb-2">Diagnostic Data (What Vercel sees):</h3>
+            <div>Length of FIREBASE_PRIVATE_KEY: <span className="text-white">{pkLength} characters</span></div>
+            <div>Value starts with: <span className="text-white">"{pkPrefix}"</span></div>
+            {pkLength < 100 && (
+               <div className="text-orange-400 font-bold mt-2">
+                 ⚠️ WARNING: Your private key is abnormally short! A real Firebase Private Key is usually &gt;1600 characters. You may have accidentally pasted your Project ID or Email into the Private Key field in Vercel.
+               </div>
+            )}
+            {!pk.includes('BEGIN') && pkLength >= 100 && (
+               <div className="text-orange-400 font-bold mt-2">
+                 ⚠️ WARNING: Your private key does not contain "BEGIN PRIVATE KEY". You may have pasted the wrong value.
+               </div>
+            )}
+          </div>
+          
+          <p className="text-white/60">Check your FIREBASE_PRIVATE_KEY in Vercel to ensure you pasted the actual Key.</p>
         </div>
       </div>
     );
   }
+
 
   let username = null;
   let queryError = null;
