@@ -73,10 +73,15 @@ export default function ProfileSettingsPage() {
     try {
       if (photoFile) {
         toast.info("Uploading photo...");
-        finalPhotoUrl = await uploadFileToFirebase(photoFile, `avatars/${user.uid}-${Date.now()}`);
+        try {
+          finalPhotoUrl = await uploadFileToFirebase(photoFile, `avatars/${user.uid}-${Date.now()}`);
+        } catch (uploadError) {
+          console.error("Upload failed, using fallback URL if available:", uploadError);
+          toast.error("Photo upload failed. You can paste an image URL below instead.");
+          // We don't throw here so they can still save other changes
+        }
       }
 
-      // Slugify username: lowercase, replace spaces with -, remove special chars
       const sanitizedUsername = formData.username
         .toLowerCase()
         .trim()
@@ -96,13 +101,11 @@ export default function ProfileSettingsPage() {
         photoUrl: finalPhotoUrl 
       }));
       
-      // Clear local photo file to reset preview to the new URL
       setPhotoFile(null);
-      
       toast.success("Profile updated successfully!");
     } catch (error: any) {
       console.error("Save Error:", error);
-      toast.error(error.message || "An error occurred");
+      toast.error(error.message || "An error occurred while saving profile");
     } finally {
       setSaving(false);
     }
@@ -127,25 +130,41 @@ export default function ProfileSettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             
-            <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-              <div className="h-24 w-24 rounded-full border bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                 {photoFile ? (
-                    <img src={URL.createObjectURL(photoFile)} className="w-full h-full object-cover" />
-                 ) : formData.photoUrl ? (
-                    <img src={formData.photoUrl} className="w-full h-full object-cover" />
-                 ) : (
-                    <UploadCloud className="h-8 w-8 text-muted-foreground" />
-                 )}
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="photo">Profile Photo</Label>
-                <Input 
-                  id="photo" 
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
-                  className="max-w-xs"
-                />
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                <div className="h-24 w-24 rounded-full border bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                  {photoFile ? (
+                      <img src={URL.createObjectURL(photoFile)} className="w-full h-full object-cover" />
+                  ) : formData.photoUrl ? (
+                      <img src={formData.photoUrl} className="w-full h-full object-cover" />
+                  ) : (
+                      <UploadCloud className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="space-y-4 flex-1">
+                  <div className="space-y-1">
+                    <Label htmlFor="photo">Upload Photo (Recommended)</Label>
+                    <Input 
+                      id="photo" 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => setPhotoFile(e.target.files?.[0] || null)}
+                      className="max-w-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="photoUrl">Manual Photo URL (Fallback/Plan B)</Label>
+                    <Input 
+                      id="photoUrl" 
+                      name="photoUrl"
+                      placeholder="https://example.com/photo.jpg"
+                      value={formData.photoUrl} 
+                      onChange={handleChange}
+                      className="max-w-md"
+                    />
+                    <p className="text-[10px] text-muted-foreground italic">Use this if the file upload fails due to storage errors.</p>
+                  </div>
+                </div>
               </div>
             </div>
 
