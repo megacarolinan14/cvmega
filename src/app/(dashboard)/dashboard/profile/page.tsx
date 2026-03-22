@@ -72,13 +72,25 @@ export default function ProfileSettingsPage() {
         finalPhotoUrl = await uploadFileToFirebase(photoFile, `avatars/${user.uid}-${Date.now()}`);
       }
 
+      // Slugify username: lowercase, replace spaces with -, remove special chars
+      const sanitizedUsername = formData.username
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
+
       await setDoc(doc(db, "profiles", user.uid), {
         ...formData,
+        username: sanitizedUsername,
         photoUrl: finalPhotoUrl,
         updatedAt: new Date().toISOString()
       }, { merge: true });
 
-      setFormData((prev) => ({ ...prev, photoUrl: finalPhotoUrl }));
+      setFormData((prev) => ({ 
+        ...prev, 
+        username: sanitizedUsername,
+        photoUrl: finalPhotoUrl 
+      }));
       toast.success("Profile updated successfully!");
     } catch (error: any) {
       toast.error(error.message || "An error occurred");
@@ -132,6 +144,9 @@ export default function ProfileSettingsPage() {
               <div className="space-y-2">
                 <Label htmlFor="username">Username (Public URL Slug)</Label>
                 <Input id="username" name="username" value={formData.username} onChange={handleChange} required />
+                <p className="text-xs font-mono text-muted-foreground bg-muted p-2 rounded border border-dashed">
+                  Live Preview: <span className="text-primary font-bold">cvmega.vercel.app/{formData.username.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || "your-slug"}</span>
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="headline">Headline / Job Title</Label>
